@@ -16,6 +16,26 @@ contract('DAO', function(accounts)
     instance = await DAO.deployed();
     contract = new my_web3.eth.Contract(instance.abi, instance.address);
   }
+
+  async function getGasCost(txhash)
+  {
+    const transaction = await my_web3.eth.getTransaction(txhash);
+    const receipt = await my_web3.eth.getTransactionReceipt(txhash);
+    return receipt.gasUsed * transaction.gasPrice;
+  }
+
+  function getBalanceChange(txCallback, account)
+  {
+    return new Promise(async (resolve) =>
+    {
+      const balanceBefore = new BigNumber(await my_web3.eth.getBalance(account));
+      const tx = await txCallback(); 
+      const gasCost = await getGasCost(tx.tx);
+      const balanceAfter = new BigNumber(await my_web3.eth.getBalance(account));
+      const delta = balanceAfter.plus(gasCost).minus(balanceBefore);
+      resolve(delta);
+    });
+  }
   
   it("has one member by default, the deployer, with 1,000,000 weight", async () =>
   {
@@ -31,7 +51,7 @@ contract('DAO', function(accounts)
     await setupSingleOwner();
     const amount = BigNumber(1000000);
     await instance.send(amount.toString());     
-    const delta = await helpers.getBalanceChange(instance.withdrawl(), accounts[0]);
+    const delta = await getBalanceChange(async () => await instance.withdrawl(), accounts[0]);
     assert.equal(delta.toString(), amount.toString());
   });
 
@@ -40,10 +60,10 @@ contract('DAO', function(accounts)
     await setupSingleOwner();
     const amount = BigNumber(1);
     await instance.send(amount.toString());     
-    const delta = await helpers.getBalanceChange(instance.withdrawl(), accounts[0]);
-    assert.isTrue(delta.toString() == "0");
-    const contractBalance = await web3.eth.getBalance(instance.address);
-    assert.equal(contractBalance.toString(), amount.toString());
+    const delta = await getBalanceChange(async () => await instance.withdrawl(), accounts[0]);
+    assert.equal(delta.toString(), "0");
+    const contractBalance = await my_web3.eth.getBalance(instance.address);
+    assert.equal(contractBalance, amount.toString());
   });
 
   it("can add a member", async () =>
