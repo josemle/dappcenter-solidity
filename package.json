@@ -3,13 +3,13 @@
   "version": "0.0.1",
   "description": "Solidity Contracts by HardlyDifficult",
   "scripts": {
-    "test": "./node_modules/.bin/truffle test",
+    "test": "./node_modules/.bin/truffle test"
   },
   "dependencies": {
     "truffle": "^4.1.13",
     "truffle-config": "^1.0.6",
     "truffle-core": "^4.1.13",
     "truffle-flattener": "github:alcuadrado/truffle-flattener#master",
-    "truffle-workflow-compile": "^1.0.6",
-  },
+    "truffle-workflow-compile": "^1.0.6"
+  }
 }
