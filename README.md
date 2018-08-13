@@ -1,4 +1,4 @@
 # SolidityContracts
 
-##About
+## About
 SolidityContracts is a cryptocurrency tool 
