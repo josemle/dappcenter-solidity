@@ -11,11 +11,5 @@ matrix:
 script:
   - npm install
   - npm install -g ganache-cli truffle
-  - set -e
-  - ganache-cli 
-  - sleep 5 # to make sure ganache-cli is up and running before compiling
-  - rm -rf build
-  - truffle compile
-  - truffle migrate --reset --network development
+  - docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest
   - truffle test
-  - kill -9 $(lsof -t -i:8545)
