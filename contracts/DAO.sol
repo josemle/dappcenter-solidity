@@ -3,7 +3,7 @@
 	and allow members to vote on arbitrary calls.
 
  x Recieve funds to be redistributed to the team.
- - Distribute funds by percent share in the group.
+ x Distribute funds by percent share in the group.
  - Any team member can propose an arbitrary call.
    - Others may approve or deny.
 	 - Once majority approval (based on percent share), execute the call.
@@ -20,6 +20,7 @@ Concerns:
 
 
 TODO 
+ x Docker / GitHub testing
  - maybe dump balance into storage instead of withdrawl for all (alt: a member is managed by another contract)
  - fixed commitments per timeframe (e.g. monthly server cost), agree on a proposal to send the first x ETH every y blocks 
  to address z.
@@ -28,7 +29,7 @@ TODO
  - Need to be able to drain contract (post vote)
  - Experiment with gas cost for external vs internal calls (should be never forward to an external)
  - Do we consider a vanity starting with 1 0 byte to save gas?
- - Docker / GitHub testing
+ - Test for events
 
 Voting:
  - Consider time/timeout to prevent a brick.
@@ -39,6 +40,13 @@ pragma solidity ^0.4.24;
 
 contract DAO 
 {
+	// TODO remove:
+	event log(address message);
+	event log(uint message);
+	event log(string message);
+
+	////////////////////////////////////////////
+
   struct Member
 	{
 		address memberAddress;
@@ -58,6 +66,7 @@ contract DAO
 		bytes transactionBytes; 
 		uint value;
 		uint lastActionDate;
+		uint executedOn;
 
 		mapping (address => Vote) addressToVote;
 	}
@@ -65,11 +74,7 @@ contract DAO
 	mapping (address => uint) addressToMemberIdPlusOne;
 	Member[] public members;
 	uint proposalCount;
-	mapping (uint => Proposal) public idToProposal; // TODO switch to a mapping?
-
-	event log(address message);
-	event log(uint message);
-	event log(string message);
+	mapping (uint => Proposal) public idToProposal; 
 
 	event AddProposal(uint proposalId);
 	event ExecuteProposal(uint proposalId);
@@ -97,25 +102,11 @@ contract DAO
 	
 	function addProposal(address contractAddress, bytes transactionBytes, uint value) onlyMembers public
 	{
-		Proposal memory proposal = Proposal(contractAddress, transactionBytes, value, now);
+		Proposal memory proposal = Proposal(contractAddress, transactionBytes, value, now, 0);
 		uint id = ++proposalCount;
 		idToProposal[id] = proposal;
 		emit AddProposal(id);
 	}
-
-	// function addMember(address _address, uint _weight) onlyMembers public
-	// {
-	// 	uint i;
-	// 	bytes4 data = bytes4(keccak256("_addMember(address)"));
-	// 	bytes memory info = new bytes(36);
-	// 	for(i = 0; i < 4; i++)
-	// 	{
-	// 		info[i] = data[i];
-	// 	}
-	// 	assembly { mstore(add(info, 36), _address) }
-	// 	//assembly { mstore(add(info, 68), _weight) }
-	// 	_address.call(info);
-	// }
 
 	function executeProposal(uint proposalId) public 
 	{
@@ -158,12 +149,10 @@ contract DAO
 			totalWeight += members[i].weight;
 		}
 
-		uint weiPerWeight = address(this).balance / totalWeight;
-
 		for(i = 0; i < members.length; i++)
 		{
 			Member memory member =  members[i];
-			uint share = weiPerWeight * member.weight;
+			uint share = (address(this).balance * member.weight) / totalWeight;
 			member.memberAddress.transfer(share); 
 
 			emit Withdrawl(member.memberAddress, share);
