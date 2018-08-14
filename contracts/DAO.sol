@@ -4,23 +4,24 @@
 
  x Recieve funds to be redistributed to the team.
  x Distribute funds by percent share in the group.
- - Any team member can propose an arbitrary call.
+ x Any team member can propose an arbitrary call.
    - Others may approve or deny.
 	 - Once majority approval (based on percent share), execute the call.
  - Withdrawl - either personally or one triggers payout to all
  - Team members may be added or removed.  Percent shares may be changed as well.
    - Approve using the same rules as above.
+ - Voting rules: consider number of people, ownership share, and time.  Voting NO means much more than not voting.
  -  
 
 Concerns:
- - Inactive member
+ - Inactive members
  - Lost keys
- - Stolen keys
- - Malicious member
-
+ - Stolen keys 
+ - Malicious members
 
 TODO 
  x Docker / GitHub testing
+ - Test arbitrary calls (means deploying another contract to test with)
  - maybe dump balance into storage instead of withdrawl for all (alt: a member is managed by another contract)
  - fixed commitments per timeframe (e.g. monthly server cost), agree on a proposal to send the first x ETH every y blocks 
  to address z.
@@ -30,9 +31,6 @@ TODO
  - Experiment with gas cost for external vs internal calls (should be never forward to an external)
  - Do we consider a vanity starting with 1 0 byte to save gas?
  - Test for events
-
-Voting:
- - Consider time/timeout to prevent a brick.
 
 */
 
