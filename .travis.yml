@@ -1,6 +1,7 @@
 language: node_js
 os:
 - linux
+- osx
 node_js:
 - '8'
 cache:
@@ -9,7 +10,5 @@ cache:
 matrix:
   fast_finish: true
 script:
-  - npm install
-  - npm install -g ganache-cli truffle
-  - docker run -d -p 8545:8545 trufflesuite/ganache-cli:latest
-  - truffle test
+  - npx truffle compile
+  - npm test
