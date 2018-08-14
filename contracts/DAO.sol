@@ -13,14 +13,15 @@
 		One member denies the other and the smart contract cannot know which is malicious.
 
 	TODO 
-	- Test for multi-member withdrawl scenarios (including uneven weighting)
-	- Test a transfer with approval (spending the reserve).
 	- Experiment with gas cost for external vs internal calls (should be never forward to an external)
 	- Test for events
 	- Test for overflow and/or add SafeMath
 	- Test modifiers
 	- Test overflowing the weight by adding a member with too much, then confirm we can change weights or something.
 	- Test arbitrary calls (means deploying another contract to test with)
+	- Consider affiliate logic?
+	   - store account -> referrer
+		 - transacation referrer
 */
 
 pragma solidity ^0.4.24;
@@ -241,6 +242,11 @@ contract DAO
 	function changeMinimumReserve(uint _minimumReserve) onlyApprovedProposals public
 	{
 		minimumReserve = _minimumReserve;
+	}
+
+	function send(address _to, uint _amount) onlyApprovedProposals public
+	{
+		_to.transfer(_amount);
 	}
 
 	function withdrawl() onlyMembers public

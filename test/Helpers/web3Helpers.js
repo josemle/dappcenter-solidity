@@ -22,7 +22,7 @@ module.exports =
     return new BigNumber(await my_web3.eth.getBalance(address));
   },
 
-  async getBalanceChange(txCallbackFunction, account)
+  async getBalanceChangeAfterGas(txCallbackFunction, account)
   {
     const balanceBefore = await this.getBalance(account);
     const tx = await txCallbackFunction(); 
