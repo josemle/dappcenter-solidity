@@ -2,38 +2,26 @@
 	DAO: Holds funds to be redistributed to the team, manage the team, 
 	and allow members to vote on arbitrary calls.
 
- x Recieve funds to be redistributed to the team.
- x Distribute funds by percent share in the group.
- x Any team member can propose an arbitrary call.
-   - Others may approve or deny.
-	 - Once majority approval (based on percent share), execute the call.
- - Withdrawl - either personally or one triggers payout to all
- - Team members may be added or removed.  Percent shares may be changed as well.
-   - Approve using the same rules as above.
- - Voting rules: consider number of people, ownership share, and time.  Voting NO means much more than not voting.
- - Propose a change to timeTillMinorityCanExecute
+	Concerns:
+	- Inactive members: after 2 weeks minority approval is sufficient, use that to kick 'em.
+	- Lost keys: TODO swap
+	- Malicious members: Vote them down and then kick 'em, it's important to keep an eye on new proposals.
+	- Stolen keys: Vote them down and then kick 'em or do the lost key swap.
 
-Concerns:
- - Inactive members
- - Lost keys
- - Stolen keys 
- - Malicious members
+	Risks: 
+	- 2 member teams are not safe (unless one has more weight).  
+		One member denies the other and the smart contract cannot know which is malicious.
 
-TODO 
- x Docker / GitHub testing
- - Test arbitrary calls (means deploying another contract to test with)
- - maybe dump balance into storage instead of withdrawl for all (alt: a member is managed by another contract)
- - fixed commitments per timeframe (e.g. monthly server cost), agree on a proposal to send the first x ETH every y blocks 
- to address z.
-    - We agree on a minimum balance (e.g. 1 ETH).  When withdrawl, always leave 1 eth behind.
-		- Then proposals to widthdrawl for team expenses (.5 eth)
- - Need to be able to drain contract (post vote)
- - Experiment with gas cost for external vs internal calls (should be never forward to an external)
- - Do we consider a vanity starting with 1 0 byte to save gas?
- - Test for events
-  // TODO test describe again
-	- Test for a rejected vote
-
+	TODO 
+	- Add a minimum reserve, a way of changing the min via a vote. 
+	- Test for multi-member withdrawl scenarios (including uneven weighting)
+	- Test cashout everything.
+	- Experiment with gas cost for external vs internal calls (should be never forward to an external)
+	- Test for events
+	- Test for overflow and/or add SafeMath
+	- Test modifiers
+	- Test overflowing the weight by adding a member with too much, then confirm we can change weights or something.
+	- Test arbitrary calls (means deploying another contract to test with)
 */
 
 pragma solidity ^0.4.24;
@@ -76,11 +64,16 @@ contract DAO
 	uint proposalCount;
 	mapping (uint => Proposal) public idToProposal; 
 	uint timeTillMinorityCanExecute;
+	uint minimumReserve;
 
 	event AddProposal(uint proposalId);
 	event VoteOnProposal(uint proposalId, bool inFavorOf);
 	event ExecuteProposal(uint proposalId);
+
 	event Withdrawl(address member, uint amount);
+
+	event AddMember(address memberAddress, uint weight);
+	event RemoveMember(address memberAddress);
 
 	modifier onlyMembers
 	{
@@ -98,6 +91,7 @@ contract DAO
 	{
 		_addMember(msg.sender, 1000000);
 		timeTillMinorityCanExecute = 2 weeks;
+		minimumReserve = 1 ether;
 	}
 
 	// Accept money from anyone, no logic to save on gas
@@ -118,6 +112,10 @@ contract DAO
 	{
 		Proposal storage proposal = idToProposal[proposalId];
 		Vote vote = inFavorOf ? Vote.For : Vote.Against;
+		if(proposal.addressToVote[msg.sender] == Vote.NoVote)
+		{ // You can vote again, changing your previous submission.  But that will not reset the clock.
+			proposal.lastActionDate = now;
+		}
 		proposal.addressToVote[msg.sender] = vote;
 		emit VoteOnProposal(proposalId, inFavorOf);
 	}
@@ -185,6 +183,7 @@ contract DAO
 
 	function addMember(address _address, uint _weight) onlyApprovedProposals public
 	{
+		_withdrawl();
 		_addMember(_address, _weight);
 	}
 
@@ -196,25 +195,78 @@ contract DAO
 		uint id = members.length;
 		addressToMemberIdPlusOne[_address] = id + 1;
 		members.push(Member(_address, _weight));
+		emit AddMember(_address, _weight);
+	}
+
+	function removeMember(address _address) onlyApprovedProposals public
+	{
+		uint id = addressToMemberIdPlusOne[_address];
+		require(id > 0);
+		id--;
+		addressToMemberIdPlusOne[_address] = 0;
+		members[id] = members[members.length - 1];
+		members.length--;
+		emit RemoveMember(_address);
+	}
+
+	function swapMember(address _originalAddress, address _newAddress) onlyApprovedProposals public 
+	{
+		uint id = addressToMemberIdPlusOne[_originalAddress];
+		require(id > 0);
+		id--;
+		members[id].memberAddress = _newAddress;
+	}
+
+	function setMemberWeights(address[] _addresses, uint[] _weights) onlyApprovedProposals public
+	{
+		require(_addresses.length == _weights.length);
+
+		uint totalWeight;
+		for(uint i = 0; i < _addresses.length; i++)
+		{
+			uint memberId = addressToMemberIdPlusOne[_addresses[i]];
+			require(memberId > 0);
+			memberId--;
+			require(totalWeight < totalWeight + _weights[i]); // Prevents overflowing weight.
+			totalWeight += _weights[i];
+			members[memberId].weight = _weights[i];
+		}
+	}
+
+	function setTimeTillMinorityCanExecute(uint _timeTillMinorityCanExecute) onlyApprovedProposals public
+	{
+		require(_timeTillMinorityCanExecute > 0);
+		timeTillMinorityCanExecute = _timeTillMinorityCanExecute;
 	}
 
 	function withdrawl() onlyMembers public
 	{
+		_withdrawl();
+	}
+
+	function _withdrawl() internal
+	{
 		uint i;
 
-		uint totalWeight = 0;
-		for(i = 0; i < members.length; i++)
+		uint balance = address(this).balance;
+		if(balance > minimumReserve)
 		{
-			totalWeight += members[i].weight;
-		}
+			balance -= minimumReserve;
 
-		for(i = 0; i < members.length; i++)
-		{
-			Member memory member =  members[i];
-			uint share = (address(this).balance * member.weight) / totalWeight;
-			member.memberAddress.transfer(share); 
+			uint totalWeight = 0;
+			for(i = 0; i < members.length; i++)
+			{
+				totalWeight += members[i].weight;
+			}
 
-			emit Withdrawl(member.memberAddress, share);
+			for(i = 0; i < members.length; i++)
+			{
+				Member memory member =  members[i];
+				uint share = (balance * member.weight) / totalWeight;
+				member.memberAddress.transfer(share); 
+
+				emit Withdrawl(member.memberAddress, share);
+			}
 		}
 	}
 }

@@ -32,6 +32,11 @@ module.exports =
     return delta;
   },
 
+  toWei(value, unit)
+  {
+    return new BigNumber(my_web3.utils.toWei(value.toString(), unit));
+  },
+
   // https://medium.com/coinmonks/using-truffle-framework-in-an-advanced-way-7e32c11c97a9
   // Sends increateTime instruction, mines block and returns a Promise.
   increaseTime (addSeconds) 
