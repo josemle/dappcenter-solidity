@@ -1,34 +1,9 @@
 {
-  "name": "zos",
+  "name": "soliditycontracts",
   "version": "1.1.0",
-  "description": "ZeppelinOS command line interface",
-  "main": "lib/index.js",
   "scripts": {
-    "prepack": "truffle compile && rm -rf lib && babel src --out-dir lib",
-    "test": "./node_modules/.bin/truffle test",
-    "gen-docs": "babel-node docs/bin/docs.js"
+    "test": "./node_modules/.bin/truffle test"
   },
-  "bin": {
-    "zos": "./lib/bin/zos-cli.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+ssh://git@github.com/zeppelinos/zos-cli.git"
-  },
-  "keywords": [
-    "zos",
-    "zeppelinos",
-    "cli"
-  ],
-  "files": [
-    "lib",
-    "examples"
-  ],
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/zeppelinos/zos-cli/issues"
-  },
-  "homepage": "https://github.com/zeppelinos/zos-cli#readme",
   "dependencies": {
     "axios": "^0.18.0",
     "bignumber.js": "^7.2.1",
