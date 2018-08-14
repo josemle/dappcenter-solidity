@@ -1,5 +1,7 @@
 # SolidityContracts
 
+![Travis Build](https://travis-ci.org/hardlydifficult/SolidityContracts.svg?branch=master)
+
 ## About
 
 A WIP collection of smart contracts.
