@@ -11,7 +11,7 @@
  - Team members may be added or removed.  Percent shares may be changed as well.
    - Approve using the same rules as above.
  - Voting rules: consider number of people, ownership share, and time.  Voting NO means much more than not voting.
- -  
+ - Propose a change to timeTillMinorityCanExecute
 
 Concerns:
  - Inactive members
@@ -31,6 +31,8 @@ TODO
  - Experiment with gas cost for external vs internal calls (should be never forward to an external)
  - Do we consider a vanity starting with 1 0 byte to save gas?
  - Test for events
+  // TODO test describe again
+	- Test for a rejected vote
 
 */
 
@@ -54,8 +56,8 @@ contract DAO
 	enum Vote
 	{
 		NoVote,
-		VoteFor,
-		VoteAgainst
+		For,
+		Against
 	}
 
 	struct Proposal
@@ -73,8 +75,10 @@ contract DAO
 	Member[] public members;
 	uint proposalCount;
 	mapping (uint => Proposal) public idToProposal; 
+	uint timeTillMinorityCanExecute;
 
 	event AddProposal(uint proposalId);
+	event VoteOnProposal(uint proposalId, bool inFavorOf);
 	event ExecuteProposal(uint proposalId);
 	event Withdrawl(address member, uint amount);
 
@@ -93,6 +97,7 @@ contract DAO
 	constructor() public 
 	{
 		_addMember(msg.sender, 1000000);
+		timeTillMinorityCanExecute = 2 weeks;
 	}
 
 	// Accept money from anyone, no logic to save on gas
@@ -101,14 +106,28 @@ contract DAO
 	function addProposal(address contractAddress, bytes transactionBytes, uint value) onlyMembers public
 	{
 		Proposal memory proposal = Proposal(contractAddress, transactionBytes, value, now, 0);
-		uint id = ++proposalCount;
-		idToProposal[id] = proposal;
-		emit AddProposal(id);
+		uint proposalId = ++proposalCount;
+		idToProposal[proposalId] = proposal;
+		emit AddProposal(proposalId);
+
+		voteOnProposal(proposalId, true);
+	}
+
+	// Anyone can vote, but only members will have their opinion tallied
+	function voteOnProposal(uint proposalId, bool inFavorOf) public
+	{
+		Proposal storage proposal = idToProposal[proposalId];
+		Vote vote = inFavorOf ? Vote.For : Vote.Against;
+		proposal.addressToVote[msg.sender] = vote;
+		emit VoteOnProposal(proposalId, inFavorOf);
 	}
 
 	function executeProposal(uint proposalId) public 
 	{
 		Proposal memory proposal = idToProposal[proposalId];
+		// TODO test gas savings making this internal
+		require(isProposalApproved(proposalId));
+
 		// TODO confirm votes
 		emit log("Execute");
 		bool success = proposal.contractAddress.call.value(proposal.value)(proposal.transactionBytes); 
@@ -120,6 +139,48 @@ contract DAO
 		{
 			emit log("fail");
 		}
+	}
+
+	function isProposalApproved(uint proposalId) view public returns (bool canExecute) 
+	{
+		Proposal storage proposal = idToProposal[proposalId];
+		uint weightFor;
+		uint weightAgainst;
+		uint countFor;
+		uint countAgainst;
+		uint totalWeight; 
+		for(uint i = 0; i < members.length; i++)
+		{
+			Member memory member = members[i];
+			totalWeight += member.weight;
+			Vote vote = proposal.addressToVote[member.memberAddress];
+			if(vote == Vote.For)
+			{
+				countFor++;
+				weightFor += member.weight;
+			}
+			else if(vote == Vote.Against)
+			{
+				countAgainst++;
+				weightAgainst += member.weight;
+			}
+		}
+
+		// No is more powerful than yes
+		if(weightAgainst >= weightFor || countAgainst >= countFor)
+		{
+			return false;
+		}
+
+		// Majority == instant approval
+		if(weightFor > totalWeight / 2 || countFor > members.length / 2)
+		{
+			return true;
+		}
+
+		// Minority can execute if unoppossed for timeTillMinorityCanExecute
+		uint timeSinceLastAction = now - proposal.lastActionDate;
+		return timeSinceLastAction > timeTillMinorityCanExecute;
 	}
 
 	function addMember(address _address, uint _weight) onlyApprovedProposals public

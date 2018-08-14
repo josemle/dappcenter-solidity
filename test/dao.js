@@ -10,14 +10,23 @@ contract('DAO', function(accounts)
   
   async function setupOwners(count)
   {
-    instance = await DAO.deployed();
+    instance = await DAO.new();
+    assert.isTrue(await testHelpers.isLength(instance.members, 1));
+
     contract = web3Helpers.getContract(instance.abi, instance.address);
 
     for(let i = 1; i < count; i++)
     {
       const trasactionBytes = contract.methods.addMember(accounts[i], 1000000).encodeABI();
       const proposal = await instance.addProposal(instance.address, trasactionBytes, 0);
-      await instance.executeProposal(proposal.logs[0].args.proposalId);
+      const proposalId = proposal.logs[0].args.proposalId;
+
+      for(let j = 1; j < i; j++)
+      {
+        await instance.voteOnProposal(proposalId, true, {from: accounts[j]});
+      }
+
+      await instance.executeProposal(proposalId);
     }
   } 
   
@@ -59,14 +68,45 @@ contract('DAO', function(accounts)
   it("can add a member", async () =>
   {
     await setupOwners(2);
-
+    assert.isTrue(await testHelpers.isLength(instance.members, 2));
     assert.equal((await instance.members.call(0))[0], accounts[0]);
     assert.equal((await instance.members.call(1))[0], accounts[1]);
-    assert.isTrue(await testHelpers.doesThrow(instance.members.call(2)));
   });
 
+  it("cannot add two members without a vote", async () =>
+  {
+    await setupOwners(2);
 
+    const trasactionBytes = contract.methods.addMember(accounts[2], 1000000).encodeABI();
+    const proposal = await instance.addProposal(instance.address, trasactionBytes, 0);
+    assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposal.logs[0].args.proposalId)));
+  });
 
+  it("can add two members after a vote", async () =>
+  {
+    await setupOwners(3);
+    assert.isTrue(await testHelpers.isLength(instance.members, 3));
+    assert.equal((await instance.members.call(0))[0], accounts[0]);
+    assert.equal((await instance.members.call(1))[0], accounts[1]);
+    assert.equal((await instance.members.call(2))[0], accounts[2]);
+  });
+
+  it("can support a large team", async () =>
+  {
+    await setupOwners(accounts.length);
+    assert.isTrue(await testHelpers.isLength(instance.members, accounts.length));
+  });
+
+  it("can execute an minority approved proposal after 2 weeks", async () =>
+  {
+    await setupOwners(2);
+
+    const trasactionBytes = contract.methods.addMember(accounts[2], 1000000).encodeABI();
+    const proposal = await instance.addProposal(instance.address, trasactionBytes, 0);
+    assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposal.logs[0].args.proposalId)));
+    await web3Helpers.increaseTime(2 * 7 * 24 * 60 * 60 + 1);
+    assert.isFalse(await testHelpers.doesThrow(instance.executeProposal(proposal.logs[0].args.proposalId)));
+  });
 
 
 
