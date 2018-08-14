@@ -4,7 +4,7 @@
 
 	Concerns:
 	- Inactive members: after 2 weeks minority approval is sufficient, use that to kick 'em.
-	- Lost keys: TODO swap
+	- Lost keys: Use swap member to replace the old address with a new.
 	- Malicious members: Vote them down and then kick 'em, it's important to keep an eye on new proposals.
 	- Stolen keys: Vote them down and then kick 'em or do the lost key swap.
 
@@ -13,9 +13,8 @@
 		One member denies the other and the smart contract cannot know which is malicious.
 
 	TODO 
-	- Add a minimum reserve, a way of changing the min via a vote. 
 	- Test for multi-member withdrawl scenarios (including uneven weighting)
-	- Test cashout everything.
+	- Test a transfer with approval (spending the reserve).
 	- Experiment with gas cost for external vs internal calls (should be never forward to an external)
 	- Test for events
 	- Test for overflow and/or add SafeMath
@@ -237,6 +236,11 @@ contract DAO
 	{
 		require(_timeTillMinorityCanExecute > 0);
 		timeTillMinorityCanExecute = _timeTillMinorityCanExecute;
+	}
+
+	function changeMinimumReserve(uint _minimumReserve) onlyApprovedProposals public
+	{
+		minimumReserve = _minimumReserve;
 	}
 
 	function withdrawl() onlyMembers public
