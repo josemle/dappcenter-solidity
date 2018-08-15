@@ -1,33 +1,3 @@
-/*
-	DAO: Holds funds to be redistributed to the team, manage the team, 
-	and allow members to vote on arbitrary calls.
-
-	Concerns:
-	- Inactive members: after 2 weeks minority approval is sufficient, use that to kick 'em.
-	- Lost keys: Use swap member to replace the old address with a new.
-	- Malicious members: Vote them down and then kick 'em, it's important to keep an eye on new proposals.
-	- Stolen keys: Vote them down and then kick 'em or do the lost key swap.
-
-	Risks: 
-	- 2 member teams are not safe (unless one has more weight).  
-		One member denies the other and the smart contract cannot know which is malicious.
-
-	TODO 
-	- Test modifiers
-	- Test for events
-	- Test arbitrary calls (means deploying another contract to test with) w/ and w/o value
-	- Consider affiliate logic?
-	   - store account -> referrer
-		 - transacation referrer
-	- Test to confirm we can't execute twice
-	- Test gas savings using smaller ints?
-	- Research storage vs memory more.
-	- Allow resubmitting of failed calls (e.g. an external dependancy had a short term freeze activated)
-	- Risk: someone votes on something really old to not get noticed?  Add an expiration?
-	- Do we add manditory waiting for some commands?
-	- Test calling an external function()payable
-*/
-
 pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
