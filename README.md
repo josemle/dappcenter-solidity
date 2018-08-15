@@ -21,17 +21,12 @@ Risks:
   One member denies the other and the smart contract cannot know which is malicious.
 
 TODO 
-- Allow resubmitting of failed calls (e.g. an external dependancy had a short term freeze activated)
-- Risk: someone votes on something really old to not get noticed?  Add an expiration.  Need a clear final bit for proposals (accepted or not).
-    - 1 month default with configure option
-- Majority weight and count is instant, or requires a delay. Or super majority of either weight or people for instant.
 - Test holding and sending an ERC20.
   - Do we support withdraw ERC20's by share as well?
-- More events, every action - e.g. change minTime
 - How to view all proposals?
-- Only members can vote, else date can be abused
-- Best practice: 2 man team uses 4 keys.  e.g. 49, 49, 1, 1
+- Best practice: 1/2 man team uses 2x keys.  e.g. 49, 49, 1, 1
 - Add a feature list to the readme.
+- Expose more info
 - Front end.
   - Maybe make it easy to create and select your team(s)?
   - Teams per contract or in the same?

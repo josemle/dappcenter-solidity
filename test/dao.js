@@ -135,11 +135,12 @@ contract('DAO', function(accounts)
       const proposal = await instance.addProposal(instance.address, transactionBytes, 0);
       const proposalId = proposal.logs[0].args.proposalId;
       assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
-      await instance.voteOnProposal(proposalId, false, {from: accounts[2]});
-      assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
-      await instance.voteOnProposal(proposalId, true, {from: accounts[1]});
+      await instance.voteOnProposal(proposalId, false, {from: accounts[1]}); // Don't kick me!
+      await instance.voteOnProposal(proposalId, true, {from: accounts[2]}); // Kick him!
+      // Test
       assert.isFalse(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
 
+      // exit criteria
       assert.isTrue(await testHelpers.isLength(instance.members, 2));
       assert.equal((await instance.members.call(0))[0], accounts[0]);
       assert.equal((await instance.members.call(1))[0], accounts[2]);
@@ -178,7 +179,7 @@ contract('DAO', function(accounts)
     it("can change the time interval till minority can execute", async () =>
     {
       await setupOwners(3);
-      let transactionBytes = contract.methods.setTimeTillMinorityCanExecute(TWO_WEEKS * 2).encodeABI();
+      let transactionBytes = contract.methods.setTimeTillMinorityCanExecute(TWO_WEEKS * .5).encodeABI();
       let proposal = await instance.addProposal(instance.address, transactionBytes, 0);
       let proposalId = proposal.logs[0].args.proposalId;
       await instance.voteOnProposal(proposalId, true, {from: accounts[1]});
@@ -189,17 +190,39 @@ contract('DAO', function(accounts)
       proposal = await instance.addProposal(instance.address, transactionBytes, 0);
       proposalId = proposal.logs[0].args.proposalId;
       assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
-      await web3Helpers.increaseTime(TWO_WEEKS + 1);
-      assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
-      await web3Helpers.increaseTime(TWO_WEEKS + 1);
+      await web3Helpers.increaseTime(TWO_WEEKS * .5 + 1);
       assert.isFalse(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
+    });
+    
+    it("can change the time interval till expired", async () =>
+    {
+      await setupOwners(1);
+      let transactionBytes = contract.methods.setTimeTillExpired(TWO_WEEKS + 1).encodeABI();
+      let proposal = await instance.addProposal(instance.address, transactionBytes, 0);
+      let proposalId = proposal.logs[0].args.proposalId;
+      await instance.executeProposal(proposalId);
+      transactionBytes = contract.methods.addMember(accounts[6], 1000000).encodeABI();
+      proposal = await instance.addProposal(instance.address, transactionBytes, 0);
+      proposalId = proposal.logs[0].args.proposalId;
+      await web3Helpers.increaseTime(TWO_WEEKS + 2);
+      assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
+    });
+    
+    it("can not execute once expired", async () =>
+    {
+      await setupOwners(1);
+      let transactionBytes = contract.methods.setTimeTillExpired(TWO_WEEKS + 1).encodeABI();
+      let proposal = await instance.addProposal(instance.address, transactionBytes, 0);
+      let proposalId = proposal.logs[0].args.proposalId;
+      await web3Helpers.increaseTime(TWO_WEEKS * 3);
+      assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
     });
 
     it("can change the minimum reserve and then cash out", async () =>
     {
       await setupOwners(1);
       await instance.send(TWO_ETHER.toString());     
-      const transactionBytes = contract.methods.changeMinimumReserve(0).encodeABI();
+      const transactionBytes = contract.methods.setMinimumReserve(0).encodeABI();
       const proposal = await instance.addProposal(instance.address, transactionBytes, 0);
       const proposalId = proposal.logs[0].args.proposalId;
       await instance.executeProposal(proposalId);

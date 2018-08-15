@@ -3,7 +3,7 @@ import "openzeppelin-solidity/contracts/math/SafeMath.sol";
 
 contract DAO 
 {
-	using SafeMath for uint256;
+	using SafeMath for uint;
 	enum Vote
 	{
 		NoVote,
@@ -20,7 +20,7 @@ contract DAO
 		address contractAddress;
 		bytes transactionBytes; 
 		uint value;
-		uint lastActionDate;
+		uint proposedOn;
 		uint executedOn;
 		mapping (address => Vote) addressToVote;
 	}
@@ -30,14 +30,20 @@ contract DAO
 	uint proposalCount;
 	mapping (uint => Proposal) public idToProposal; 
 	uint timeTillMinorityCanExecute;
+	uint timeTillExpired;
 	uint minimumReserve;
 	
-	event AddProposal(uint proposalId);
-	event VoteOnProposal(uint proposalId, bool inFavorOf);
-	event ExecuteProposal(uint proposalId, bool success);
-	event Withdrawl(address member, uint amount);
+	event AddProposal(address proposalFrom, uint proposalId);
+	event VoteOnProposal(address voteFrom, uint proposalId, bool inFavorOf);
+	event ExecuteProposal(address requestFrom, uint proposalId, bool success);
+	event Withdrawl(address requestFrom, uint totalAmount);
 	event AddMember(address memberAddress, uint weight);
 	event RemoveMember(address memberAddress);
+	event SwapMember(address originalAddress, address newAddress);
+	event SetMemberWeight(address memberAddress, uint fromWeight, uint newWeight);
+	event SetTimeTillMinorityCanExecute(uint timeTillMinorityCanExecute);
+	event SetTimeTillExpired(uint timeTillExpired);
+	event SetMinimumReserve(uint minimumReserve);
 	
 	modifier onlyMembers
 	{
@@ -53,6 +59,7 @@ contract DAO
 	constructor() public 
 	{
 		timeTillMinorityCanExecute = 2 weeks;
+		timeTillExpired = 4 weeks;
 		minimumReserve = 1 ether;
 		_addMember(msg.sender, 1000000);
 	}
@@ -66,33 +73,38 @@ contract DAO
 		require(transactionBytes.length != 0);
 		uint proposalId = proposalCount++;
 		idToProposal[proposalId] = Proposal(contractAddress, transactionBytes, value, now, 0);
-		emit AddProposal(proposalId);
+		emit AddProposal(msg.sender, proposalId);
 
 		// If you added the proposal, you're assumed to be in favor 
 		voteOnProposal(proposalId, true);
 	}
 
-	// Anyone can vote, but only members will have their opinion tallied
 	function voteOnProposal(uint proposalId, bool inFavorOf) public
 	{
+		require(isProposalOpen(proposalId));
 		Proposal storage proposal = idToProposal[proposalId];
-		require(proposal.executedOn == 0);
-		if(proposal.addressToVote[msg.sender] == Vote.NoVote)
-		{ // You can vote again, changing your previous submission.  But that will not reset the clock.
-			proposal.lastActionDate = now;
-		}
 		proposal.addressToVote[msg.sender] = inFavorOf ? Vote.For : Vote.Against;
-		emit VoteOnProposal(proposalId, inFavorOf);
+		emit VoteOnProposal(msg.sender, proposalId, inFavorOf);
+	}
+
+	function isProposalOpen(uint proposalId) view public returns (bool isOpen)
+	{
+		Proposal storage proposal = idToProposal[proposalId];
+		return proposal.executedOn == 0 
+		 	&& proposal.proposedOn + timeTillExpired > now;
 	}
 
 	function executeProposal(uint proposalId) onlyMembers public 
 	{
-		Proposal storage proposal = idToProposal[proposalId];
-		require(proposal.executedOn == 0);
+		require(isProposalOpen(proposalId));
 		require(isProposalApproved(proposalId));
-		proposal.executedOn = now;
+		Proposal storage proposal = idToProposal[proposalId];
 		bool success = proposal.contractAddress.call.value(proposal.value)(proposal.transactionBytes); 
-		emit ExecuteProposal(proposalId, success);
+		if(success)
+		{ // Allow resubmitting a failed call
+			proposal.executedOn = now;
+		}
+		emit ExecuteProposal(msg.sender, proposalId, success);
 	}
 
 	function isProposalApproved(uint proposalId) view public returns (bool canExecute) 
@@ -120,18 +132,26 @@ contract DAO
 			}
 		}
 
-		if(weightAgainst >= weightFor || countAgainst >= countFor)
-		{ // No is more powerful than yes
+		if(weightAgainst >= totalWeight.add(1).div(2) || countAgainst >= (members.length + 1) / 2)
+		{ // Majority no of either weight or count == denied
 			return false;
 		}
-		else if(weightFor > totalWeight.div(2) || countFor > members.length / 2)
-		{ // Majority == instant approval
+		else if(weightFor >= totalWeight.mul(2).add(2).div(3) || countFor >= (members.length * 2 + 2) / 3)
+		{ // Super Majority of either weight or count == approved
 			return true;
 		}
+		else if(weightFor > totalWeight.add(1).div(2) && countFor > (members.length + 1) / 2)
+		{	// Majority of both Weight & Count == approved
+			return true;
+		}
+		else if(weightFor >= weightAgainst && countFor >= countAgainst)
+		{ // Minority can execute if more are for than against after timeTillMinorityCanExecute has passed
+			uint timeSinceProposed = now.sub(proposal.proposedOn);
+			return timeSinceProposed > timeTillMinorityCanExecute;
+		}
 		else
-		{ // Minority can execute if unoppossed for timeTillMinorityCanExecute
-			uint timeSinceLastAction = now.sub(proposal.lastActionDate);
-			return timeSinceLastAction > timeTillMinorityCanExecute;
+		{
+			return false;
 		}
 	}
 
@@ -173,6 +193,7 @@ contract DAO
 		require(id > 0);
 		id--;
 		members[id].memberAddress = _newAddress;
+		emit SwapMember(_originalAddress, _newAddress);
 	}
 
 	function setMemberWeights(address[] _addresses, uint[] _weights) onlyApprovedProposals public
@@ -187,7 +208,9 @@ contract DAO
 			memberId--;
 			require(_weights[i] > 0);
 			require(_weights[i] < 1000000000000000);
-			members[memberId].weight = _weights[i];
+			Member storage member = members[memberId];
+			emit SetMemberWeight(member.memberAddress, member.weight, _weights[i]);
+			member.weight = _weights[i];
 		}
 	}
 
@@ -195,11 +218,20 @@ contract DAO
 	{
 		require(_timeTillMinorityCanExecute > 0); // This may prevent a smart contract attack
 		timeTillMinorityCanExecute = _timeTillMinorityCanExecute;
+		emit SetTimeTillMinorityCanExecute(timeTillMinorityCanExecute);
 	}
 
-	function changeMinimumReserve(uint _minimumReserve) onlyApprovedProposals public
+	function setTimeTillExpired(uint _timeTillExpired) onlyApprovedProposals public
+	{
+		require(_timeTillExpired > timeTillMinorityCanExecute);
+		timeTillExpired = _timeTillExpired;
+		emit SetTimeTillExpired(timeTillExpired);
+	}
+
+	function setMinimumReserve(uint _minimumReserve) onlyApprovedProposals public
 	{
 		minimumReserve = _minimumReserve;
+		emit SetMinimumReserve(minimumReserve);
 	}
 
 	function send(address _to, uint _amount) onlyApprovedProposals public
@@ -215,6 +247,7 @@ contract DAO
 	function _withdrawl() internal
 	{
 		uint balance = address(this).balance;
+		uint totalAmount;
 		if(balance > minimumReserve)
 		{
 			balance = balance.sub(minimumReserve);
@@ -228,9 +261,13 @@ contract DAO
 			{
 				Member memory member = members[i];
 				uint share = (balance.mul(member.weight)).div(totalWeight);
-				member.memberAddress.transfer(share); 
-				emit Withdrawl(member.memberAddress, share);
+				if(member.memberAddress.send(share))
+				{
+					totalAmount += share;
+				}
 			}
 		}
+
+		emit Withdrawl(msg.sender, totalAmount);
 	}
 }
