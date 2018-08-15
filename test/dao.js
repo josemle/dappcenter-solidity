@@ -1,4 +1,5 @@
 const DAO = artifacts.require("./DAO.sol");
+const BasicContract = artifacts.require("./tests/BasicContract.sol");
 const testHelpers = require('./Helpers/testHelpers');
 const web3Helpers = require('./Helpers/web3Helpers');
 const BigNumber = require('bignumber.js');
@@ -283,6 +284,75 @@ contract('DAO', function(accounts)
       const balanceAfter = await web3Helpers.getBalance(accounts[6]);
       const delta = balanceAfter.minus(balanceBefore);
       assert.equal(delta.toString(), ONE_ETHER.toString());
+    });
+  });
+
+  describe("External Contract Calls", () =>
+  {
+    let basicInstance;
+    let basicContract;
+
+    beforeEach(async () =>
+    {
+      await setupOwners(1);
+      basicInstance = await BasicContract.new();
+      basicContract = web3Helpers.getContract(basicInstance.abi, basicInstance.address);
+    });
+
+    it("function() payable", async () =>
+    {
+      const transactionBytes = contract.methods.send(basicInstance.address, ONE_ETHER).encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId; 
+      const execution = await instance.executeProposal(proposalId);
+      assert.isTrue(testHelpers.logContainsDataNumber(execution, 12345));
+    });
+
+    it("test()", async () =>
+    {
+      const transactionBytes = basicContract.methods.test().encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId; 
+      const execution = await instance.executeProposal(proposalId);
+      assert.isTrue(testHelpers.logContainsDataNumber(execution, 23456));
+    });
+
+    it("testPayable()", async () =>
+    {
+      await instance.send(TWO_ETHER.toString());
+      const transactionBytes = basicContract.methods.testPayable().encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, ONE_ETHER.toString());
+      const proposalId = proposal.logs[0].args.proposalId; 
+      const execution = await instance.executeProposal(proposalId);
+      assert.isTrue(testHelpers.logContainsDataNumber(execution, 34567));
+    });
+
+    it("test42()", async () =>
+    {
+      const transactionBytes = basicContract.methods.test42(42).encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId; 
+      const execution = await instance.executeProposal(proposalId);
+      assert.isTrue(testHelpers.logContainsDataNumber(execution, 45678));
+    });
+
+    it("test42Payable()", async () =>
+    {
+      await instance.send(TWO_ETHER.toString());
+      const transactionBytes = basicContract.methods.test42Payable(42).encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, ONE_ETHER.toString());
+      const proposalId = proposal.logs[0].args.proposalId; 
+      const execution = await instance.executeProposal(proposalId);
+      assert.isTrue(testHelpers.logContainsDataNumber(execution, 56789));
+    });
+    
+    it("cannot execute the same proposal twice", async() =>
+    {
+      const transactionBytes = basicContract.methods.test().encodeABI();
+      const proposal = await instance.addProposal(basicInstance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId; 
+      assert.isFalse(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
+      assert.isTrue(await testHelpers.doesThrow(instance.executeProposal(proposalId)));
     });
   });
 });

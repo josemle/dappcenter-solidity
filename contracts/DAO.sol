@@ -87,7 +87,7 @@ contract DAO
 
 	function executeProposal(uint proposalId) onlyMembers public 
 	{
-		Proposal memory proposal = idToProposal[proposalId];
+		Proposal storage proposal = idToProposal[proposalId];
 		require(proposal.executedOn == 0);
 		require(isProposalApproved(proposalId));
 		proposal.executedOn = now;

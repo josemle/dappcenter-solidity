@@ -21,11 +21,7 @@ Risks:
   One member denies the other and the smart contract cannot know which is malicious.
 
 TODO 
-- Test arbitrary calls (means deploying another contract to test with) w/ and w/o value
-    - Test an external function()payable
 - Allow resubmitting of failed calls (e.g. an external dependancy had a short term freeze activated)
-- Test to confirm we can't execute twice
-- Research storage vs memory more.
 - Risk: someone votes on something really old to not get noticed?  Add an expiration.  Need a clear final bit for proposals (accepted or not).
     - 1 month default with configure option
 
