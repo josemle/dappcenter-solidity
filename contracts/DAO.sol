@@ -11,7 +11,7 @@ contract DAO
 		For,
 		Against
 	}
-  struct Member
+	struct Member
 	{
 		address memberAddress;
 		uint weight;
