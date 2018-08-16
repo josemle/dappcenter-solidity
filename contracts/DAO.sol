@@ -1,5 +1,6 @@
 pragma solidity ^0.4.24;
 import "openzeppelin-solidity/contracts/math/SafeMath.sol";
+import "openzeppelin-solidity/contracts/token/ERC20/ERC20Basic.sol";
 
 contract DAO 
 {
@@ -25,18 +26,19 @@ contract DAO
 		mapping (address => Vote) addressToVote;
 	}
 	
-	mapping (address => uint) addressToMemberIdPlusOne;
+	mapping (address => uint) public addressToMemberIdPlusOne;
 	Member[] public members;
-	uint proposalCount;
+	uint public proposalCount;
 	mapping (uint => Proposal) public idToProposal; 
-	uint timeTillMinorityCanExecute;
-	uint timeTillExpired;
-	uint minimumReserve;
+	uint public timeTillMinorityCanExecute;
+	uint public timeTillExpired;
+	uint public minimumReserve;
 	
 	event AddProposal(address proposalFrom, uint proposalId);
 	event VoteOnProposal(address voteFrom, uint proposalId, bool inFavorOf);
 	event ExecuteProposal(address requestFrom, uint proposalId, bool success);
 	event Withdrawl(address requestFrom, uint totalAmount);
+	event WithdrawlERC20(address requestFrom, address tokenAddress, uint totalAmount);
 	event AddMember(address memberAddress, uint weight);
 	event RemoveMember(address memberAddress);
 	event SwapMember(address originalAddress, address newAddress);
@@ -260,7 +262,7 @@ contract DAO
 			for(i = 0; i < members.length; i++)
 			{
 				Member memory member = members[i];
-				uint share = (balance.mul(member.weight)).div(totalWeight);
+				uint share = balance.mul(member.weight).div(totalWeight);
 				if(member.memberAddress.send(share))
 				{
 					totalAmount += share;
@@ -269,5 +271,29 @@ contract DAO
 		}
 
 		emit Withdrawl(msg.sender, totalAmount);
+	}
+
+	function withdrawlERC20(address _tokenAddress) onlyMembers public
+	{
+		ERC20Basic erc20Basic = ERC20Basic(_tokenAddress);
+		uint balance = erc20Basic.balanceOf(address(this));
+		uint totalAmount;
+		uint i;
+		uint totalWeight = 0;
+		for(i = 0; i < members.length; i++)
+		{
+			totalWeight = totalWeight.add(members[i].weight);
+		}
+		for(i = 0; i < members.length; i++)
+		{
+			Member memory member = members[i];
+			uint share = balance.mul(member.weight).div(totalWeight);
+			if(erc20Basic.transfer(member.memberAddress, share))
+			{
+				totalAmount += share;
+			}
+		}
+
+		emit WithdrawlERC20(msg.sender, _tokenAddress, totalAmount);
 	}
 }

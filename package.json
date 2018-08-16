@@ -5,6 +5,7 @@
     "test": "./node_modules/.bin/truffle test"
   },
   "dependencies": {
+    "abi-decoder": "^1.2.0",
     "axios": "^0.18.0",
     "bignumber.js": "^7.2.1",
     "chalk": "^2.4.1",
