@@ -273,6 +273,28 @@ contract DAO
 		emit Withdrawl(msg.sender, totalAmount);
 	}
 
+	function estimateWithdrawl() onlyMembers view public returns (uint amount)
+	{
+		uint balance = address(this).balance;
+		if(balance <= minimumReserve)
+		{
+			return 0;
+		}
+
+		balance = balance.sub(minimumReserve);
+		uint i;
+		uint totalWeight = 0;
+		for(i = 0; i < members.length; i++)
+		{
+			totalWeight = totalWeight.add(members[i].weight);
+		}
+		uint memberId = addressToMemberIdPlusOne[msg.sender];
+		require(memberId > 0);
+		memberId--;
+		Member memory member = members[memberId];
+		return balance.mul(member.weight).div(totalWeight);
+	}
+
 	function withdrawlERC20(address _tokenAddress) onlyMembers public
 	{
 		ERC20Basic erc20Basic = ERC20Basic(_tokenAddress);
@@ -295,5 +317,22 @@ contract DAO
 		}
 
 		emit WithdrawlERC20(msg.sender, _tokenAddress, totalAmount);
+	}
+	
+	function estimateWithdrawlERC20(address _tokenAddress) onlyMembers view public returns (uint amount)
+	{
+		ERC20Basic erc20Basic = ERC20Basic(_tokenAddress);
+		uint balance = erc20Basic.balanceOf(address(this));
+		uint i;
+		uint totalWeight = 0;
+		for(i = 0; i < members.length; i++)
+		{
+			totalWeight = totalWeight.add(members[i].weight);
+		}
+		uint memberId = addressToMemberIdPlusOne[msg.sender];
+		require(memberId > 0);
+		memberId--;
+		Member memory member = members[memberId];
+		return balance.mul(member.weight).div(totalWeight);
 	}
 }

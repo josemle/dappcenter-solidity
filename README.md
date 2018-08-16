@@ -42,7 +42,6 @@ Risks:
   You could consider 2 keys per person here, e.g. each member having both a 49% weight account and a 1% weight account (which is only used in case of emergancy).
 
 TODO 
- - Estimate how much I would get if withdrawl now.
  - Should we add support for deploy contract?
  - Front end.
   - Maybe make it easy to create and select your team(s)?

@@ -323,6 +323,22 @@ contract('DAO', function(accounts)
       assert.equal(method.params[0].type, "address");
       assert.equal(method.params[1].value, ONE_ETHER.toString());
     });
+
+    it("can estimate how much I'll get from withdrawl", async() =>
+    {
+      await setupOwners(3);
+      const transactionBytes = contract.methods.setMemberWeights(
+        [accounts[0], accounts[1], accounts[2]],
+        [6000, 3000, 1000]).encodeABI();
+      const proposal = await instance.addProposal(instance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId;
+      await instance.voteOnProposal(proposalId, true, {from: accounts[1]});
+      await instance.executeProposal(proposalId);
+      await instance.send(TWO_ETHER.toString());
+      assert.equal((await instance.estimateWithdrawl({from: accounts[0]})).toString(), ONE_ETHER.times(60).dividedToIntegerBy(100).toString());
+      assert.equal((await instance.estimateWithdrawl({from: accounts[1]})).toString(), ONE_ETHER.times(30).dividedToIntegerBy(100).toString());
+      assert.equal((await instance.estimateWithdrawl({from: accounts[2]})).toString(), ONE_ETHER.times(10).dividedToIntegerBy(100).toString());
+    });
   });
 
   describe("External Contract Calls", () =>
@@ -439,6 +455,24 @@ contract('DAO', function(accounts)
       assert.equal((await exampleERC20Instance.balanceOf(accounts[2])).toString(), startingBalance.times(10).dividedToIntegerBy(100).toString());
       assert.equal((await exampleERC20Instance.balanceOf(accounts[1])).toString(), startingBalance.times(30).dividedToIntegerBy(100).toString());
       assert.equal((await exampleERC20Instance.balanceOf(accounts[0])).toString(), startingBalance.times(60).dividedToIntegerBy(100).toString());
+    });
+
+    it("can estimate how much I'll get from withdrawl", async() =>
+    {
+      await setupOwners(3);
+      await exampleERC20Instance.transfer(instance.address, startingBalance.toString());
+
+      const transactionBytes = contract.methods.setMemberWeights(
+        [accounts[0], accounts[1], accounts[2]],
+        [6000, 3000, 1000]).encodeABI();
+      const proposal = await instance.addProposal(instance.address, transactionBytes, 0);
+      const proposalId = proposal.logs[0].args.proposalId;
+      await instance.voteOnProposal(proposalId, true, {from: accounts[1]});
+      await instance.executeProposal(proposalId);
+
+      assert.equal((await instance.estimateWithdrawlERC20(exampleERC20Instance.address, {from: accounts[0]})).toString(), startingBalance.times(60).dividedToIntegerBy(100).toString());
+      assert.equal((await instance.estimateWithdrawlERC20(exampleERC20Instance.address, {from: accounts[1]})).toString(), startingBalance.times(30).dividedToIntegerBy(100).toString());
+      assert.equal((await instance.estimateWithdrawlERC20(exampleERC20Instance.address, {from: accounts[2]})).toString(), startingBalance.times(10).dividedToIntegerBy(100).toString());
     });
   });
 });
