@@ -12,9 +12,14 @@ module.exports =
     return receipt.gasUsed * transaction.gasPrice;
   },
 
-  getContract(abi, address)
+  getContract(abi, address, topics)
   {
-    return new my_web3.eth.Contract(abi, address);
+    return new my_web3.eth.Contract(abi, address, topics);
+  },
+  
+  parseLogs(abi, eventName, log)
+  {
+    return my_web3.eth.abi.decodeLog(abi.find((a) => a.name == eventName).inputs, log.data, log.topics);
   },
 
   async getBalance(address)
