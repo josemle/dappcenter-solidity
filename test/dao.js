@@ -355,7 +355,7 @@ contract('DAO', function(accounts)
 
     it("function() payable", async () =>
     {
-      const transactionBytes = contract.methods.send(basicInstance.address, ONE_ETHER).encodeABI();
+      const transactionBytes = contract.methods.send(basicInstance.address, ONE_ETHER.toString()).encodeABI();
       const proposal = await instance.addProposal(basicInstance.address, transactionBytes, 0);
       const proposalId = proposal.logs[0].args.proposalId; 
       const execution = await instance.executeProposal(proposalId);
@@ -429,7 +429,7 @@ contract('DAO', function(accounts)
       await exampleERC20Instance.transfer(instance.address, startingBalance.toString());
       assert.equal((await exampleERC20Instance.balanceOf(accounts[0])).toString(), "0");
       assert.equal((await exampleERC20Instance.balanceOf(instance.address)).toString(), startingBalance.toString());
-      const transactionBytes = exampleERC20Contract.methods.transfer(accounts[6], startingBalance).encodeABI();
+      const transactionBytes = exampleERC20Contract.methods.transfer(accounts[6], startingBalance.toString()).encodeABI();
       const proposal = await instance.addProposal(exampleERC20Instance.address, transactionBytes, 0);
       const proposalId = proposal.logs[0].args.proposalId; 
       assert.equal((await exampleERC20Instance.balanceOf(instance.address)).toString(), startingBalance.toString());
