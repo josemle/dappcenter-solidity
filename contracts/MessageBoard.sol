@@ -23,10 +23,7 @@ contract MessageBoard
     // tip / inverseShareOfTips = fee (higher is cheaper; 0 for none)
     uint public inverseShareOfTips; 
 
-    mapping(uint => Message) public messages;
-    uint public messageCount;
-    uint[] public mostRecentMessages;
-    uint[] public mostTippedMessages;
+    Message[] public messages;
 
     constructor(address _ownerAddress, uint _costToPost, uint _inverseShareOfTips) public
     {
@@ -36,24 +33,26 @@ contract MessageBoard
         costToPost = _costToPost;
         inverseShareOfTips = _inverseShareOfTips;
     }
+
+    function getMessageCount() public view returns (uint count)
+    {
+        count = messages.length;
+    }
     
     function postMessage(string _message) payable public 
     {
         require(msg.value >= costToPost);
         ownerAddress.transfer(msg.value);
        
-        uint messageId = messageCount++;
+        uint messageId = messages.length;
         Message memory message = Message(messageId, _message, tx.origin, 0);
-        messages[messageId] = message;
-        mostRecentMessages.push(messageId);
-        mostTippedMessages.push(messageId);
+        messages.push(message);
         
         emit NewMessage(message.messageId, message.message, message.author);
     }
     
     function tipMessage(uint _messageId) payable public
     {
-        // TODO sort on tip
         uint valueToSend;
         if(inverseShareOfTips > 0)
         {

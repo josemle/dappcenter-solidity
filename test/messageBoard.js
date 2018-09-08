@@ -10,6 +10,7 @@ contract('messageBoard', function(accounts)
   const owner = accounts[1];
   function getUser(userId)
   {
+    userId = userId % (accounts.length - 2);
     return accounts[userId + 2];
   }
   
@@ -153,5 +154,35 @@ contract('messageBoard', function(accounts)
     });
   });
 
-  // TODO test sorting by tip amount
+  describe("tips", () =>
+  {
+    beforeEach(async () =>
+    {
+      instance = await messageBoard.new(owner, 0, 0);
+      contract = web3Helpers.getContract(instance.abi, instance.address);
+    });
+
+    it("should update totalTips", async () =>
+    {
+      let result = await instance.postMessage("My message", {from: getUser(0)});
+      const messageId = web3Helpers.parseLogs(instance.abi, "NewMessage", result.receipt.logs[0]).messageId.toString();
+      await instance.tipMessage(messageId, {value: "42", from: getUser(2)});
+      assert.equal((await instance.messages(messageId))[3], "42");
+      await instance.tipMessage(messageId, {value: "42", from: getUser(2)});
+      assert.equal((await instance.messages(messageId))[3], "84");
+    });
+
+    it("can spam tips", async () =>
+    {
+      for(let i = 0; i < 999; i++)
+      {
+        const message = "my message " + i;
+        let result = await instance.postMessage(message, {from: getUser(i)});
+        const messageId = web3Helpers.parseLogs(instance.abi, "NewMessage", result.receipt.logs[0]).messageId.toString();
+        await instance.tipMessage(messageId, {value: i.toString(), from: getUser(i + 1)});
+      }
+
+      await instance.tipMessage(99, {value: "999999999", from: getUser(1)});
+    });
+  });
 });

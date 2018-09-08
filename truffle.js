@@ -9,5 +9,8 @@ module.exports = {
       network_id: '*',
       gas: 5000000
     }
+  },
+  mocha: {
+    enableTimeouts: false
   }
 }
