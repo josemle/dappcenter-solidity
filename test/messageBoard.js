@@ -152,4 +152,6 @@ contract('messageBoard', function(accounts)
       assert(authorBalanceAfter.toString(), authorBalanceBefore.plus(authorTip).toString());
     });
   });
+
+  // TODO test sorting by tip amount
 });
