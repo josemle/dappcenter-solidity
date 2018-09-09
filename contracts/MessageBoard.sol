@@ -22,21 +22,31 @@ contract MessageBoard
     uint public costToPost;
     // tip / inverseShareOfTips = fee (higher is cheaper; 0 for none)
     uint public inverseShareOfTips; 
+    uint public messageCount;
 
     Message[] public messages;
 
-    constructor(address _ownerAddress, uint _costToPost, uint _inverseShareOfTips) public
+    constructor() public
     {
-        require(_ownerAddress != 0);
-        
-        ownerAddress = _ownerAddress;
-        costToPost = _costToPost;
-        inverseShareOfTips = _inverseShareOfTips;
+        ownerAddress = msg.sender;
+        costToPost = 42;
+        inverseShareOfTips = 500;
     }
 
-    function getMessageCount() public view returns (uint count)
+    function getMessageCount() public view returns (uint)
     {
-        count = messages.length;
+        //count = messages.length; wtf tron
+        return messageCount;
+    }
+
+    function testGetString() public pure returns (string)
+    {
+        return "yo";
+    }
+
+    function testGetFirstMessage() public view returns (string)
+    {
+        return messages[0];
     }
     
     function postMessage(string _message) payable public 
@@ -44,7 +54,7 @@ contract MessageBoard
         require(msg.value >= costToPost);
         ownerAddress.transfer(msg.value);
        
-        uint messageId = messages.length;
+        uint messageId = messageCount++;
         Message memory message = Message(messageId, _message, tx.origin, 0);
         messages.push(message);
         
