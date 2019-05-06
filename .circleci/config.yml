@@ -1,0 +1,116 @@
+version: 2.1
+jobs:
+  init: # checkout and auto-lint
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - run: git submodule sync
+      - run: git submodule update --init
+
+      # save checkout
+      - persist_to_workspace:
+          root: '..'
+          paths:
+            - repo
+
+      - restore_cache:
+          keys:
+            - v1-{{ checksum "package.json" }}
+
+      - run: npm i --production --ignore-scripts
+
+      # lint and commit any changes, which may restart the build
+      - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run: npm run lint # includes --fix
+      - run: bash .circleci/commit.sh
+
+      - save_cache:
+          paths:
+            - node_modules
+            - package-lock.json
+          key: v1-{{ checksum "package.json" }}
+
+  ethereum:
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - attach_workspace:
+          at: '..'
+
+      - restore_cache:
+          keys:
+            - v1-{{ checksum "ethereum/package.json" }}
+
+      - run: cd ethereum && npm i --production
+      - save_cache:
+          paths:
+            - ethereum/node_modules
+            - ethereum/package-lock.json
+          key: v1-{{ checksum "ethereum/package.json" }}
+
+      - run: cd ethereum
+      - run: npm run compile
+      - run: npm run test
+
+  tron:
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - attach_workspace:
+          at: '..'
+
+      - restore_cache:
+          keys:
+            - v1-{{ checksum "tron/package.json" }}
+
+      - run: cd tron && npm i --production
+      - save_cache:
+          paths:
+            - tron/node_modules
+            - tron/package-lock.json
+          key: v1-{{ checksum "tron/package.json" }}
+
+      - run: cd tron
+      - run: npm run compile
+      - run: npm run test
+
+  push:
+    docker:
+      - image: circleci/node:10
+    working_directory: ~/repo
+    steps:
+      - attach_workspace:
+          at: '..'
+
+      - run: mkdir ~/.ssh
+      - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      - run: bash .circleci/deploy-artifacts.sh
+
+workflows:
+  build:
+    jobs:
+      - init:
+          filters:
+            branches:
+              ignore:
+                - gh-pages
+                - artifacts
+      - ethereum:
+          requires:
+            - init
+      - tron:
+          requires:
+            - init
+      - push:
+          filters:
+            branches:
+              only:
+                - master
+          requires:
+            - init
+            - ethereum
+            - tron

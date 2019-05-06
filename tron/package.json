@@ -1,0 +1,15 @@
+{
+  "name": "hardlydifficult-solidity-tron",
+  "license": "MIT",
+  "author": "HardlyDifficult",
+  "scripts": {
+    "build": "npm run compile",
+    "compile": "tronbox compile --all",
+    "dev": "npm run compile && npm run test",
+    "test": "tronbox test"
+  },
+  "dependencies": {
+    "bignumber.js": "8.1.1",
+    "tronbox": "2.4.1"
+  }
+}

@@ -1,0 +1,11 @@
+
+src/js/metacoin-config.js
+node_modules
+build
+.env
+metacoiin.js
+ref
+test/dex
+contracts/dex
+
+/package-lock.json
