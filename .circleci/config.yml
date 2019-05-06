@@ -35,46 +35,44 @@ jobs:
   ethereum:
     docker:
       - image: circleci/node:10
-    working_directory: ~/repo
+    working_directory: ~/repo/ethereum
     steps:
       - attach_workspace:
-          at: '..'
+          at: '../..'
 
       - restore_cache:
           keys:
-            - v1-{{ checksum "ethereum/package.json" }}
+            - v1-{{ checksum "package.json" }}
 
-      - run: cd ethereum && npm i --production
+      - run: npm i --production
       - save_cache:
           paths:
             - ethereum/node_modules
             - ethereum/package-lock.json
-          key: v1-{{ checksum "ethereum/package.json" }}
+          key: v1-{{ checksum "package.json" }}
 
-      - run: cd ethereum
       - run: npm run compile
       - run: npm run test
 
   tron:
     docker:
       - image: circleci/node:10
-    working_directory: ~/repo
+    working_directory: ~/repo/tron
     steps:
       - attach_workspace:
-          at: '..'
+          at: '../..'
 
       - restore_cache:
           keys:
-            - v1-{{ checksum "tron/package.json" }}
+            - v1-{{ checksum "package.json" }}
 
-      - run: cd tron && npm i --production
+      - run: npm i --production
       - save_cache:
           paths:
             - tron/node_modules
             - tron/package-lock.json
-          key: v1-{{ checksum "tron/package.json" }}
+          key: v1-{{ checksum "package.json" }}
 
-      - run: cd tron
       - run: npm run compile
       - run: npm run test
 
@@ -88,7 +86,7 @@ jobs:
 
       - run: mkdir ~/.ssh
       - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-      - run: bash .circleci/deploy-artifacts.sh
+      # - run: bash .circleci/deploy-artifacts.sh
 
 workflows:
   build:
