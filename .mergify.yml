@@ -73,11 +73,9 @@ pull_request_rules:
       - label=auto-merge
       - "#label=1"
       - "#changes-requested-reviews-by=0"
-      - "status-success=ci/circleci: testContracts"
       - "status-success=ci/circleci: init"
-      - "status-success=ci/circleci: buildWebsite"
-      - "status-success=ci/circleci: buildDocs"
-      - "status-success=ci/circleci: buildContracts"
+      - "status-success=ci/circleci: ethereum"
+      - "status-success=ci/circleci: tron"
       - "status-success=WIP"
     actions:
       merge:
