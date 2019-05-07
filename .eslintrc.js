@@ -1,14 +1,12 @@
 module.exports = {
   root: true,
   parserOptions: {
-    parser: "babel-eslint",
-    ecmaVersion: 2017
+    parser: "babel-eslint"
   },
   env: {
     browser: true,
     node: true,
-    mocha: true,
-    es6: true
+    mocha: true
   },
   globals: {
     expect: true,
@@ -24,8 +22,12 @@ module.exports = {
     describe: true,
     artifacts: true
   },
-  extends: ["plugin:prettier/recommended", "eslint:recommended"],
-  plugins: ["markdown", "prettier", "json"],
+  extends: [
+    "plugin:vue/essential",
+    "plugin:prettier/recommended",
+    "eslint:recommended"
+  ],
+  plugins: ["markdown", "vue", "prettier", "json", "html"],
   rules: {
     "prettier/prettier": "error",
     "no-console": 0,
