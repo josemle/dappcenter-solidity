@@ -27,7 +27,7 @@ else
 fi
 
 # copy over or recompile the new site
-cp -a -R ~/repo/library/artifacts/*.json ./
+cp -a -R ~/repo/artifacts/*.json ./
 
 # stage any changes and new files
 git add -A

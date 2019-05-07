@@ -1,0 +1,4 @@
+[submodule "artifacts"]
+	path = artifacts
+	url = https://github.com/hardlydifficult/SolidityContracts.git
+	branch = artifacts

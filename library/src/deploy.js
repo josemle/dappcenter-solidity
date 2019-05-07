@@ -29,7 +29,7 @@ async function deployContract(
   txOptions
 ) {
   const fileBuildJson = `${__dirname}/../../ethereum/build/contracts/${contractName}.json`;
-  const dirArtifacts = `${__dirname}/../artifacts/`;
+  const dirArtifacts = `${__dirname}/../../artifacts/`;
   const fileArtifactsJson = `${dirArtifacts}${contractName}.json`;
   const buildJson = JSON.parse(fs.readFileSync(fileBuildJson).toString());
 
