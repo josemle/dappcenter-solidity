@@ -57,6 +57,12 @@ jobs:
   tron:
     docker:
       - image: circleci/node:10
+      - image: trontools/quickstart
+        environment:
+          showQueryString: "true"
+          showBody: "true"
+          formatJson: "true"
+          allowTvmTransferTrc10: "1"
     working_directory: ~/repo/tron
     steps:
       - attach_workspace:
