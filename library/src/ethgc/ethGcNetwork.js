@@ -3,8 +3,8 @@ const BigNumber = require("bignumber.js");
 
 class EthGcNetwork {
   // #region Init
-  constructor(currentProvider) {
-    this.hardlyWeb3 = new HardlyWeb3(currentProvider);
+  constructor(isEth, currentProvider) {
+    this.hardlyWeb3 = new HardlyWeb3(isEth, currentProvider);
   }
 
   async _init() {

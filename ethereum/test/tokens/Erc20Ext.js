@@ -1,12 +1,17 @@
-const Erc20Extension = artifacts.require("Erc20Extension");
+const Erc20Ext = artifacts.require("Erc20Ext");
 const TestErc20 = artifacts.require("TestErc20");
+const deploy = require("../../../library/src/deploy");
+const Library = require("../../../library/src/tokens/Erc20Ext");
 
-contract("Erc20Extension", accounts => {
+contract("Erc20Ext", accounts => {
+  let library;
   let contract;
   const tokens = [];
 
   before(async () => {
-    contract = await Erc20Extension.new();
+    await deploy.deploy(true, accounts[0], [web3.currentProvider]);
+    contract = await Erc20Ext.new();
+    library = new Library(true, web3.currentProvider, contract.address);
     for (let iToken = 0; iToken < 20; iToken++) {
       const token = await TestErc20.new();
       tokens.push(token.address);
@@ -16,7 +21,7 @@ contract("Erc20Extension", accounts => {
   });
 
   it("can read balances", async () => {
-    const balances = await contract.balanceAndAllowanceOfAll(
+    const balances = await library.balanceAndAllowanceOfAll(
       accounts[0],
       accounts[9],
       tokens

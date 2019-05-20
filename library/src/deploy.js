@@ -7,6 +7,7 @@ const privateKey =
   "0x2bbe937985021fdd8365af80bb37cf948bdd5eb71c38fe91f5e1901632442058";
 
 module.exports.deploy = async (
+  isEth = true,
   fromAccount = undefined,
   networkNodes = [
     Networks.ropsten.provider,
@@ -14,26 +15,32 @@ module.exports.deploy = async (
     Networks.rinkeby.provider
   ]
 ) => {
-  const ethgc = await deployContract(networkNodes, "Ethgc", undefined, {
+  const ethgc = await deployContract(isEth, networkNodes, "Ethgc", undefined, {
     from: fromAccount
   });
-  await deployContract(networkNodes, "EthgcExt", ethgc, {
+  await deployContract(isEth, networkNodes, "EthgcExt", ethgc, {
+    from: fromAccount
+  });
+  await deployContract(isEth, networkNodes, "Erc20Ext", undefined, {
     from: fromAccount
   });
 };
 
 async function deployContract(
+  isEth,
   networkNodes,
   contractName,
   ethgcJson,
   txOptions
 ) {
-  const fileBuildJson = `${__dirname}/../../ethereum/build/contracts/${contractName}.json`;
+  const fileBuildJson = `${__dirname}/../../${
+    isEth ? "ethereum" : "tron"
+  }/build/contracts/${contractName}.json`;
   const dirArtifacts = `${__dirname}/../../artifacts/`;
   const fileArtifactsJson = `${dirArtifacts}${contractName}.json`;
-  const buildJson = JSON.parse(fs.readFileSync(fileBuildJson).toString());
+  let buildJson = JSON.parse(fs.readFileSync(fileBuildJson).toString());
 
-  const hardlyWeb3 = new HardlyWeb3(networkNodes[0]); // TODO remove
+  const hardlyWeb3 = new HardlyWeb3(isEth, networkNodes[0]); // TODO remove
   let artifactsJson;
 
   try {
@@ -50,7 +57,7 @@ async function deployContract(
   );
   await Promise.all(
     networkNodes.map(async networkNode => {
-      const networkWeb3 = new HardlyWeb3(networkNode);
+      const networkWeb3 = new HardlyWeb3(isEth, networkNode);
       if (txOptions.from) {
         networkWeb3.switchAccount(txOptions.from);
       }

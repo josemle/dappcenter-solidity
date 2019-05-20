@@ -2,7 +2,9 @@ const Web3 = require("web3");
 const BigNumber = require("bignumber.js");
 
 class HardlyWeb3 {
-  constructor(currentProvider) {
+  constructor(isEth, currentProvider) {
+    this.isEth = isEth;
+
     if (!currentProvider) {
       throw new Error("Missing provider");
     } else if (typeof currentProvider === "string") {
@@ -72,12 +74,21 @@ class HardlyWeb3 {
     });
   }
 
+  getContract(abi, contractAddress) {
+    const contract = new web3.eth.Contract(abi, contractAddress);
+    return contract;
+  }
+
   /*********************************************************************************
    * Helpers (non-network requests)
    */
 
   switchAccount(account) {
-    this.web3.defaultAccount = this.web3.utils.toChecksumAddress(account);
+    if (this.isEth) {
+      this.web3.defaultAccount = this.web3.utils.toChecksumAddress(account);
+    } else {
+      this.tronWeb.defaultAddress = account;
+    }
   }
 
   fromWei(value, unit = "ether") {

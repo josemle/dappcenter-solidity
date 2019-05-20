@@ -4,6 +4,7 @@
   "author": "HardlyDifficult",
   "scripts": {
     "build": "npm run compile",
+    "docker": "docker run -it -p 9090:9090 --rm --name tron -e \"allowSameTokenName=1\" -e \"allowTvmTransferTrc10=1\" -e \"showQueryString=true\" -e \"showBody=true\" -e \"formatJson=true\" -e \"mnemonic=happy happy happy happy happy happy happy happy happy happy happy happy\" trontools/quickstart",
     "compile": "tronbox compile --all",
     "dev": "npm run compile && npm run test",
     "test": "tronbox test"
