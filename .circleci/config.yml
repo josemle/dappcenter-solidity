@@ -34,12 +34,18 @@ jobs:
       - restore_cache:
           keys:
             - v1-{{ checksum "library/package.json" }}
-      - run: cd library && npm i --production
+      - run: cd library && npm i --production && npm run deploy
       - save_cache:
           paths:
             - library/node_modules
             - library/package-lock.json
           key: v1-{{ checksum "library/package.json" }}
+
+      # save checkout and library
+      - persist_to_workspace:
+          root: '..'
+          paths:
+            - repo/artifacts
 
   ethereum:
     docker:
