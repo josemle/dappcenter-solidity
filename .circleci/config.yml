@@ -107,7 +107,7 @@ jobs:
 
       - run: mkdir ~/.ssh
       - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-      # - run: bash .circleci/deploy-artifacts.sh
+      - run: bash .circleci/deploy-artifacts.sh
 
 workflows:
   build:
