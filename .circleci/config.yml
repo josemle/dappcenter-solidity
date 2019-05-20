@@ -94,7 +94,7 @@ jobs:
             - v2-{{ checksum "ethereum/package.json" }}
 
       # Test Ethereum contracts
-      - run: npm run test
+      - run: cd ethereum && npm run test
 
   tron:
     docker:
@@ -122,7 +122,7 @@ jobs:
             - v2-{{ checksum "tron/package.json" }}
 
       # Test Tron contracts
-      - run: npm run test
+      - run: cd tron && npm run test
 
   push:
     docker:
