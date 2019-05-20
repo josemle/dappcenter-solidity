@@ -5,16 +5,16 @@ jobs:
       - image: circleci/node:10
     working_directory: ~/repo
     steps:
+      # Checkout code & persist
       - checkout
       - run: git submodule sync
       - run: git submodule update --init
-      
-      # save checkout and library
       - persist_to_workspace:
           root: '..'
           paths:
             - repo
 
+      # npm i ./
       - restore_cache:
           keys:
             - v2-{{ checksum "package.json" }}
@@ -25,12 +25,12 @@ jobs:
             - package-lock.json
           key: v2-{{ checksum "package.json" }}
 
-      # lint and commit any changes, which may restart the build
+      # Lint and commit any changes, which may restart the build
       - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       - run: npm run lint # includes --fix
       - run: bash .circleci/commit.sh
       
-      # build library
+      # npm i ./ethereum
       - restore_cache:
           keys:
             - v2-{{ checksum "ethereum/package.json" }}
@@ -40,8 +40,10 @@ jobs:
             - ethereum/node_modules
             - ethereum/package-lock.json
           key: v2-{{ checksum "ethereum/package.json" }}
+      # Compile Ethereum contracts
       - run: cd ethereum && npm run compile
       
+      # npm i ./tron
       - restore_cache:
           keys:
             - v2-{{ checksum "tron/package.json" }}
@@ -51,41 +53,47 @@ jobs:
             - tron/node_modules
             - tron/package-lock.json
           key: v2-{{ checksum "tron/package.json" }}
+      # Compile Tron contracts
       - run: cd tron && npm run compile
 
+      # npm i ./library
       - restore_cache:
           keys:
             - v2-{{ checksum "library/package.json" }}
-      - run: cd library && npm i --production && npm run deploy
+      - run: cd library && npm i --production
       - save_cache:
           paths:
             - library/node_modules
             - library/package-lock.json
           key: v2-{{ checksum "library/package.json" }}
 
-      # save checkout and library
+      # Persist contract builds
       - persist_to_workspace:
           root: '..'
           paths:
-            - repo/artifacts
             - repo/tron/build
             - repo/ethereum/build
 
   ethereum:
     docker:
       - image: circleci/node:10
-    working_directory: ~/repo/ethereum
+    working_directory: ~/repo
     steps:
+      # Get code & contract builds
       - attach_workspace:
-          at: '../..'
+          at: '../'
 
+      # Get npm i ./library
       - restore_cache:
           keys:
-            - v2-{{ checksum "../library/package.json" }}
+            - v2-{{ checksum "library/package.json" }}
+
+      # Get npm i ./ethereum
       - restore_cache:
           keys:
-            - v2-{{ checksum "package.json" }}
+            - v2-{{ checksum "ethereum/package.json" }}
 
+      # Test Ethereum contracts
       - run: npm run test
 
   tron:
@@ -97,18 +105,23 @@ jobs:
           showBody: "true"
           formatJson: "true"
           allowTvmTransferTrc10: "1"
-    working_directory: ~/repo/tron
+    working_directory: ~/repo
     steps:
+      # Get code & contract builds
       - attach_workspace:
-          at: '../..'
+          at: '../'
 
+      # Get npm i ./library
       - restore_cache:
           keys:
-            - v2-{{ checksum "../library/package.json" }}
+            - v2-{{ checksum "library/package.json" }}
+
+      # Get npm i ./tron
       - restore_cache:
           keys:
-            - v2-{{ checksum "package.json" }}
+            - v2-{{ checksum "tron/package.json" }}
 
+      # Test Tron contracts
       - run: npm run test
 
   push:
@@ -116,9 +129,19 @@ jobs:
       - image: circleci/node:10
     working_directory: ~/repo
     steps:
+      # Get code & contract builds
       - attach_workspace:
           at: '..'
+          
+      # Get npm i ./library
+      - restore_cache:
+          keys:
+            - v2-{{ checksum "library/package.json" }}
+      
+      # Deploy contracts
+      - run: cd library && npm run deploy
 
+      # Push artifact changes
       - run: mkdir ~/.ssh
       - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
       - run: bash .circleci/deploy-artifacts.sh
