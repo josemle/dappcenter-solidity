@@ -62,16 +62,16 @@ contract MixinFees is
   ) public
     onlyDev
   {
-    gasForRedeem = newGasForRedeem;
-    gasForEth = newGasForEth;
-    gasForErc20 = newGasForErc20;
-    gasForErc721 = newGasForErc721;
-
     emit SetFees(
       newGasForRedeem,
       newGasForEth,
       newGasForErc20,
       newGasForErc721
     );
+    
+    gasForRedeem = newGasForRedeem;
+    gasForEth = newGasForEth;
+    gasForErc20 = newGasForErc20;
+    gasForErc721 = newGasForErc721;
   }
 }
