@@ -20,7 +20,8 @@ module.exports = {
     beforeAll: true,
     web3: true,
     describe: true,
-    artifacts: true
+    artifacts: true,
+    tronWeb: true
   },
   extends: [
     "plugin:vue/essential",

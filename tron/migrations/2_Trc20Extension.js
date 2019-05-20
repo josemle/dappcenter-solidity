@@ -1,7 +1,7 @@
-var Trc20Extension = artifacts.require("Trc20Extension");
+var Erc20Ext = artifacts.require("Erc20Ext");
 var TestTrc20 = artifacts.require("TestTrc20");
 
 module.exports = function(deployer) {
-  deployer.deploy(Trc20Extension);
+  deployer.deploy(Erc20Ext);
   deployer.deploy(TestTrc20);
 };

@@ -8,10 +8,17 @@ class HardlyWeb3 {
     if (!currentProvider) {
       throw new Error("Missing provider");
     } else if (typeof currentProvider === "string") {
-      currentProvider = new Web3.providers.WebsocketProvider(currentProvider);
+      if (isEth) {
+        currentProvider = new Web3.providers.WebsocketProvider(currentProvider);
+      }
     }
-    this.web3 = new Web3(currentProvider);
-    this.web3.defaultGasPrice = 4000000000;
+
+    if (isEth) {
+      this.web3 = new Web3(currentProvider);
+      this.web3.defaultGasPrice = 4000000000;
+    } else {
+      this.tronWeb = currentProvider;
+    }
   }
 
   async getEthBalance(account = this.defaultAccount()) {
@@ -75,7 +82,14 @@ class HardlyWeb3 {
   }
 
   getContract(abi, contractAddress) {
-    const contract = new web3.eth.Contract(abi, contractAddress);
+    let contract;
+
+    if (this.isEth) {
+      contract = new this.web3.eth.Contract(abi, contractAddress);
+    } else {
+      contract = this.tronWeb.contract(abi, contractAddress);
+    }
+
     return contract;
   }
 

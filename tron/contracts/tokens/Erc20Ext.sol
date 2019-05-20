@@ -5,7 +5,7 @@ import "../openzeppelin/token/TRC20/ITRC20.sol";
 /**
  * Migrated from the ethereum package
  */
-contract Trc20Extension
+contract Erc20Ext
 {
   function balanceAndAllowanceOfAll(
     address user,

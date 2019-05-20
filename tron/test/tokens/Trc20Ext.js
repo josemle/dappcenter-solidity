@@ -1,13 +1,18 @@
-const Trc20Extension = artifacts.require("Trc20Extension");
+const Erc20Ext = artifacts.require("Erc20Ext");
 const TestTrc20 = artifacts.require("TestTrc20");
+const deploy = require("../../../library/src/deploy");
+const Library = require("../../../library/src/tokens/Erc20Ext");
 const sleep = require("sleep");
 
-contract("Trc20Extension", accounts => {
+contract("Erc20Ext", accounts => {
   let contract;
+  let library;
   const tokens = [];
 
   before(async () => {
-    contract = await Trc20Extension.deployed();
+    //await deploy.deploy(false, accounts[0], [tronWeb.currentProvider]);
+    contract = await Erc20Ext.deployed();
+    library = new Library(false, tronWeb, contract.address);
     for (let iToken = 0; iToken < 1; iToken++) {
       const token = await TestTrc20.deployed();
       sleep.sleep(3);
@@ -21,11 +26,11 @@ contract("Trc20Extension", accounts => {
   });
 
   it("can read balances", async () => {
-    const balances = (await contract.balanceAndAllowanceOfAll(
+    const balances = await library.balanceAndAllowanceOfAll(
       accounts[0],
       accounts[9],
       tokens
-    )).balanceAndAllowancePerToken;
+    );
     for (let iToken = 0; iToken < 1; iToken++) {
       assert.equal(balances[iToken * 2].toString(), 5 + iToken);
       assert.equal(

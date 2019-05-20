@@ -11,8 +11,9 @@ module.exports = class ErcExt {
   }
 
   async balanceAndAllowanceOfAll(user, spender, tokens) {
-    return this.contract.methods
+    const result = await this.contract.methods
       .balanceAndAllowanceOfAll(user, spender, tokens)
       .call();
+    return this.hardlyWeb3.isEth ? result : result.balanceAndAllowancePerToken;
   }
 };
