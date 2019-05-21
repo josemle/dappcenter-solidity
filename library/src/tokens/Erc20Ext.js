@@ -5,7 +5,7 @@ module.exports = class ErcExt {
     this.hardlyWeb3 = new HardlyWeb3(isEth, provider);
     const contractJson = require("../../../artifacts/Erc20Ext.json");
     this.contract = this.hardlyWeb3.getContract(
-      this.hardlyWeb3.isEth ? contractJson.abi : contractJson.abi,
+      contractJson.abi,
       contractAddress
     );
   }
