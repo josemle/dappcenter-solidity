@@ -3,16 +3,16 @@ const BigNumber = require("bignumber.js");
 
 class EthGcNetwork {
   // #region Init
-  constructor(isEth, currentProvider) {
-    this.hardlyWeb3 = new HardlyWeb3(isEth, currentProvider);
+  constructor(currentProvider) {
+    this.hardlyWeb3 = new HardlyWeb3(true, currentProvider);
   }
 
   async _init() {
     if (this.contract) return;
     const id = await this.hardlyWeb3.web3.eth.net.getId();
-    const file = require("../../../artifacts/Ethgc.json");
+    const file = require(`${__dirname}/../../../artifacts/Ethgc.json`);
     this.contract = new this.hardlyWeb3.web3.eth.Contract(file.abi, file[id]);
-    const extFile = require("../../../artifacts/EthgcExt.json");
+    const extFile = require(`${__dirname}/../../../artifacts/EthgcExt.json`);
     this.extContract = new this.hardlyWeb3.web3.eth.Contract(
       extFile.abi,
       extFile[id]
