@@ -53,7 +53,10 @@ async function deployContract(
   }
   artifactsJson.abi = buildJson.abi;
   artifactsJson.bytecodeHash = hardlyWeb3.web3.utils.keccak256(
-    buildJson.deployedBytecode
+    buildJson.deployedBytecode.substring(
+      0,
+      buildJson.deployedBytecode.length - 64
+    )
   );
   await Promise.all(
     networkNodes.map(async networkNode => {
