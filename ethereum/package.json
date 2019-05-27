@@ -10,7 +10,7 @@
     "verify": "truffle run verify"
   },
   "dependencies": {
-    "bignumber.js": "8.1.1",
+    "bignumber.js": "9.0.0",
     "openzeppelin-solidity": "2.3.0",
     "truffle": "5.0.19"
   },
