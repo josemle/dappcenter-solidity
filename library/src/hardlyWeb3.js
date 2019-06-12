@@ -136,9 +136,7 @@ class HardlyWeb3 {
     );
     if (sendOptions.gasPrice.lt(this.toWei("0.5", "gwei"))) {
       throw new Error(
-        `The account does not have enough balance: gasPrice~ ${
-          sendOptions.gasPrice
-        }`
+        `The account does not have enough balance: gasPrice~ ${sendOptions.gasPrice}`
       );
     }
 

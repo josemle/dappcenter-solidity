@@ -424,9 +424,7 @@ Skip
     ).integerValue(BigNumber.ROUND_DOWN);
     if (sendOptions.gasPrice.lt(this.hardlyWeb3.toWei("0.5", "gwei"))) {
       throw new Error(
-        `The account does not have enough balance: gasPrice~ ${
-          sendOptions.gasPrice
-        }`
+        `The account does not have enough balance: gasPrice~ ${sendOptions.gasPrice}`
       );
     }
 
