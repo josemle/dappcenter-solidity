@@ -1,5 +1,14 @@
 {
   "extends": [
-    "config:base"
+    "config:base",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimitNone",
+    ":pinVersions"
+  ],
+  "packageRules": [
+    {
+      "packagePatterns": ["*"],
+      "schedule": ["at any time"]
+    }
   ]
 }
