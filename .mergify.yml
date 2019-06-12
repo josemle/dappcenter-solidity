@@ -13,6 +13,8 @@ pull_request_rules:
     conditions:
       - author=hardlydifficult
       - "#status-failure=0"
+      - "#label=0"
+      - "status-success=WIP"
     actions:
       label:
         add: ["auto-merge"]
@@ -22,6 +24,7 @@ pull_request_rules:
       - author=renovate[bot]
       - "#status-failure=0"
       - "#label=0"
+      - "status-success=WIP"
     actions:
       label:
         add: ["auto-merge"]
@@ -31,6 +34,7 @@ pull_request_rules:
       - author=dependabot[bot]
       - "#status-failure=0"
       - "#label=0"
+      - "status-success=WIP"
     actions:
       label:
         add: ["auto-merge"]
@@ -40,6 +44,7 @@ pull_request_rules:
       - author=imgbot[bot]
       - "#status-failure=0"
       - "#label=0"
+      - "status-success=WIP"
     actions:
       label:
         add: ["auto-merge"]
