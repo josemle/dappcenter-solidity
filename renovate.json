@@ -6,5 +6,5 @@
     ":pinVersions"
   ],
   "timezone": "America/Los_Angeles",
-  "schedule": ["at any time"]
+  "schedule": ["before 5am every weekday"]
 }
