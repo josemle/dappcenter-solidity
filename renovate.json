@@ -5,10 +5,6 @@
     ":prConcurrentLimitNone",
     ":pinVersions"
   ],
-  "packageRules": [
-    {
-      "packagePatterns": ["*"],
-      "schedule": ["at any time"]
-    }
-  ]
+  "timezone": "America/Los_Angeles",
+  "schedule": ["at any time"]
 }
