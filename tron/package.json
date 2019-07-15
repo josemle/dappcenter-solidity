@@ -12,6 +12,6 @@
   "dependencies": {
     "bignumber.js": "9.0.0",
     "sleep": "6.1.0",
-    "tronbox": "2.5.1"
+    "tronbox": "2.5.2"
   }
 }
