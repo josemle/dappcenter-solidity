@@ -140,13 +140,14 @@ jobs:
           keys:
             - v2-{{ checksum "library/package.json" }}
       
+      # Disabled!
       # Deploy contracts
-      - run: cd library && npm run deploy
+      #- run: cd library && npm run deploy
 
       # Push artifact changes
-      - run: mkdir ~/.ssh
-      - run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
-      - run: bash .circleci/deploy-artifacts.sh
+      #- run: mkdir ~/.ssh
+      #- run: ssh-keyscan -H github.com >> ~/.ssh/known_hosts
+      #- run: bash .circleci/deploy-artifacts.sh
 
 workflows:
   build:
