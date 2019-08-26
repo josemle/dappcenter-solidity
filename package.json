@@ -23,7 +23,7 @@
     "postinstall": "cd ethereum && npm i && cd ../tron && npm i"
   },
   "dependencies": {
-    "babel-eslint": "10.0.2",
+    "babel-eslint": "10.0.3",
     "eslint": "5.16.0",
     "eslint-config-airbnb": "18.0.0",
     "eslint-config-postcss": "3.0.7",
