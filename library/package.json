@@ -7,7 +7,7 @@
   },
   "dependencies": {
     "bignumber.js": "9.0.0",
-    "tronweb": "2.7.1",
+    "tronweb": "2.7.2",
     "web3": "1.2.1"
   }
 }
