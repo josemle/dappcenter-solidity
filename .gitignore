@@ -1,6 +1,8 @@
-node_modules
-build
-/lib
-.node-xmlhttprequest-sync-*
-
-package-lock.json
+node_modules
+build
+/lib
+.node-xmlhttprequest-sync-*
+
+package-lock.json
+config.bat
+.env
